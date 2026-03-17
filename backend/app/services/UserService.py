@@ -1,7 +1,7 @@
 """User business logic service."""
+import uuid
 from datetime import datetime
-from bson import ObjectId
-from modules.mongodb.MongoDBManager import MongoDBManager
+from modules.database.DatabaseManager import DatabaseManager
 from app.helpers.JWTHelper import JWTHelper
 from app.helpers.PasswordHelper import PasswordHelper
 
@@ -10,56 +10,51 @@ class UserService:
     """Handles user CRUD and authentication."""
 
     def __init__(self):
-        self.collection = MongoDBManager.get_collection('users')
+        self.db = DatabaseManager()
 
     def register(self, email: str, full_name: str, password: str, role: str = "User") -> dict:
         """Register a new user."""
-        if self.collection.find_one({"email": email}):
+        existing = self.db.fetchone("SELECT id FROM users WHERE email = ?", (email,))
+        if existing:
             return {"success": False, "message": "Email already registered"}
 
         password_hash = PasswordHelper.hash_password(password)
-        now = datetime.utcnow()
+        now = datetime.utcnow().isoformat()
+        user_id = str(uuid.uuid4())
 
-        user_doc = {
-            "email": email,
-            "full_name": full_name,
-            "password_hash": password_hash,
-            "role": role,
-            "is_active": True,
-            "created_at": now,
-            "updated_at": now,
-            "last_login": None
-        }
+        self.db.execute_and_commit(
+            "INSERT INTO users (id, email, full_name, password_hash, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?)",
+            (user_id, email, full_name, password_hash, role, now, now)
+        )
 
-        result = self.collection.insert_one(user_doc)
         return {
             "success": True,
             "message": "User registered successfully",
-            "data": {"user_id": str(result.inserted_id)}
+            "data": {"user_id": user_id}
         }
 
     def login(self, email: str, password: str) -> dict:
         """Authenticate user and return JWT token."""
-        user = self.collection.find_one({"email": email})
+        user = self.db.fetchone("SELECT * FROM users WHERE email = ?", (email,))
 
         if not user:
             return {"success": False, "message": "Invalid credentials"}
 
-        if not user.get("is_active", True):
+        if not user["is_active"]:
             return {"success": False, "message": "Account is deactivated"}
 
         if not PasswordHelper.verify_password(password, user["password_hash"]):
             return {"success": False, "message": "Invalid credentials"}
 
         token = JWTHelper.create_token({
-            "user_id": str(user["_id"]),
+            "user_id": user["id"],
             "email": user["email"],
             "role": user["role"]
         })
 
-        self.collection.update_one(
-            {"_id": user["_id"]},
-            {"$set": {"last_login": datetime.utcnow()}}
+        self.db.execute_and_commit(
+            "UPDATE users SET last_login = ? WHERE id = ?",
+            (datetime.utcnow().isoformat(), user["id"])
         )
 
         return {
@@ -68,7 +63,7 @@ class UserService:
             "data": {
                 "token": token,
                 "user": {
-                    "user_id": str(user["_id"]),
+                    "user_id": user["id"],
                     "email": user["email"],
                     "full_name": user["full_name"],
                     "role": user["role"]
@@ -82,12 +77,12 @@ class UserService:
         if not payload:
             return None
 
-        user = self.collection.find_one({"_id": ObjectId(payload["user_id"])})
-        if not user or not user.get("is_active", True):
+        user = self.db.fetchone("SELECT id, email, full_name, role, is_active FROM users WHERE id = ?", (payload["user_id"],))
+        if not user or not user["is_active"]:
             return None
 
         return {
-            "user_id": str(user["_id"]),
+            "user_id": user["id"],
             "email": user["email"],
             "full_name": user["full_name"],
             "role": user["role"]
@@ -96,53 +91,43 @@ class UserService:
     def get_all_users(self, page: int = 1, limit: int = 10) -> dict:
         """Get all users (admin only)."""
         skip = (page - 1) * limit
-        total = self.collection.count_documents({})
-        cursor = self.collection.find({}, {"password_hash": 0}).skip(skip).limit(limit).sort("created_at", -1)
+        total = self.db.fetchone("SELECT COUNT(*) as cnt FROM users")["cnt"]
+        rows = self.db.fetchall(
+            "SELECT id, email, full_name, role, is_active, created_at, updated_at, last_login FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?",
+            (limit, skip)
+        )
 
-        users = []
-        for u in cursor:
-            u["_id"] = str(u["_id"])
-            if u.get("created_at"):
-                u["created_at"] = u["created_at"].isoformat()
-            if u.get("updated_at"):
-                u["updated_at"] = u["updated_at"].isoformat()
-            if u.get("last_login"):
-                u["last_login"] = u["last_login"].isoformat()
-            users.append(u)
-
+        users = [{"_id": r["id"], **{k: r[k] for k in r.keys() if k != "id"}} for r in rows]
         return {"data": users, "total_count": total}
 
     def get_user_by_id(self, user_id: str) -> dict:
         """Get a single user."""
-        user = self.collection.find_one({"_id": ObjectId(user_id)}, {"password_hash": 0})
+        user = self.db.fetchone(
+            "SELECT id, email, full_name, role, is_active, created_at, updated_at, last_login FROM users WHERE id = ?",
+            (user_id,)
+        )
         if not user:
             return None
-        user["_id"] = str(user["_id"])
-        if user.get("created_at"):
-            user["created_at"] = user["created_at"].isoformat()
-        if user.get("updated_at"):
-            user["updated_at"] = user["updated_at"].isoformat()
-        if user.get("last_login"):
-            user["last_login"] = user["last_login"].isoformat()
-        return user
+        return {"_id": user["id"], **{k: user[k] for k in user.keys() if k != "id"}}
 
     def update_user(self, user_id: str, updates: dict) -> dict:
         """Update user fields."""
-        updates["updated_at"] = datetime.utcnow()
-        result = self.collection.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": updates}
+        updates["updated_at"] = datetime.utcnow().isoformat()
+        set_clauses = ", ".join(f"{k} = ?" for k in updates)
+        values = list(updates.values()) + [user_id]
+        cursor = self.db.execute_and_commit(
+            f"UPDATE users SET {set_clauses} WHERE id = ?", tuple(values)
         )
-        return {"success": result.modified_count > 0}
+        return {"success": cursor.rowcount > 0}
 
     def delete_user(self, user_id: str) -> dict:
         """Delete a user."""
-        result = self.collection.delete_one({"_id": ObjectId(user_id)})
-        return {"success": result.deleted_count > 0}
+        cursor = self.db.execute_and_commit("DELETE FROM users WHERE id = ?", (user_id,))
+        return {"success": cursor.rowcount > 0}
 
     def change_password(self, user_id: str, current_password: str, new_password: str) -> dict:
         """Change user password."""
-        user = self.collection.find_one({"_id": ObjectId(user_id)})
+        user = self.db.fetchone("SELECT password_hash FROM users WHERE id = ?", (user_id,))
         if not user:
             return {"success": False, "message": "User not found"}
 
@@ -150,8 +135,8 @@ class UserService:
             return {"success": False, "message": "Current password is incorrect"}
 
         new_hash = PasswordHelper.hash_password(new_password)
-        self.collection.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": {"password_hash": new_hash, "updated_at": datetime.utcnow()}}
+        self.db.execute_and_commit(
+            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
+            (new_hash, datetime.utcnow().isoformat(), user_id)
         )
         return {"success": True, "message": "Password changed successfully"}

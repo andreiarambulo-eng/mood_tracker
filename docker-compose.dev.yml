@@ -12,8 +12,7 @@ services:
       APP_HOST: 0.0.0.0
       APP_PORT: 8000
       APP_ENVIRONMENT: development
-      CONNECTION_STRING: mongodb://mongo:27017/
-      DATABASE_NAME: mood_tracker_dev
+      DATABASE_PATH: /app/data/mood_tracker_dev.db
       JWT_SECRET: dev_secret_change_in_prod
       ENCRYPTION_KEY: dev_encryption_key_change_in_prod
     ports:
@@ -21,8 +20,6 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
-    depends_on:
-      - mongo
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
@@ -40,16 +37,3 @@ services:
       - /app/node_modules
       - /app/.next
     command: npm run dev
-
-  mongo:
-    image: mongo:7
-    container_name: mood_tracker_mongo_dev
-    restart: unless-stopped
-    volumes:
-      - mongo_dev_data:/data/db
-      - ./backend/init_mongodb.js:/docker-entrypoint-initdb.d/init.js:ro
-    ports:
-      - "27017:27017"
-
-volumes:
-  mongo_dev_data:

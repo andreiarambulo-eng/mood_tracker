@@ -12,15 +12,13 @@ services:
       APP_HOST: 0.0.0.0
       APP_PORT: 8000
       APP_ENVIRONMENT: production
-      CONNECTION_STRING: mongodb://mongo:27017/
-      DATABASE_NAME: mood_tracker
+      DATABASE_PATH: /app/data/mood_tracker.db
       JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-change-this-in-production}
     ports:
       - "8000:8000"
-    depends_on:
-      mongo:
-        condition: service_healthy
+    volumes:
+      - db_data:/app/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
       interval: 30s
@@ -41,20 +39,5 @@ services:
     depends_on:
       - backend
 
-  mongo:
-    image: mongo:7
-    container_name: mood_tracker_mongo
-    restart: unless-stopped
-    volumes:
-      - mongo_data:/data/db
-      - ./backend/init_mongodb.js:/docker-entrypoint-initdb.d/init.js:ro
-    ports:
-      - "27017:27017"
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
 volumes:
-  mongo_data:
+  db_data:
