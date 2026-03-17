@@ -1,0 +1,8 @@
+from decouple import config
+
+APP_NAME = config('APP_NAME')
+APP_HOST = config('APP_HOST')
+APP_PORT = config('APP_PORT')
+APP_ENVIRONMENT = config('APP_ENVIRONMENT')
+CONNECTION_STRING = config('CONNECTION_STRING')
+DATABASE_NAME = config('DATABASE_NAME')
