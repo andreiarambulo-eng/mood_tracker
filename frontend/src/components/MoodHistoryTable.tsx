@@ -10,24 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const ITEMS_PER_PAGE = 10;
-
-function sentimentColor(label: string): "default" | "secondary" | "destructive" | "outline" {
-  switch (label?.toLowerCase()) {
-    case "positive":
-      return "default";
-    case "neutral":
-      return "secondary";
-    case "negative":
-      return "destructive";
-    default:
-      return "outline";
-  }
-}
 
 function sentimentBadgeClass(label: string): string {
   switch (label?.toLowerCase()) {

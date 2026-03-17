@@ -41,10 +41,10 @@ export default function MoodEntryForm({ onSubmit, existingMood }: MoodEntryFormP
       let result: MoodEntry;
       if (existingMood) {
         const res = await updateMood(existingMood._id, selectedScore, remark || undefined);
-        result = res!.data;
+        result = res!;
       } else {
         const res = await createMood(selectedScore, remark || undefined);
-        result = res!.data;
+        result = res!;
       }
       onSubmit(result);
     } catch {
@@ -78,7 +78,7 @@ export default function MoodEntryForm({ onSubmit, existingMood }: MoodEntryFormP
               `}
               style={
                 selectedScore === score
-                  ? { ringColor: MOOD_COLORS[score], outlineColor: MOOD_COLORS[score] }
+                  ? { borderColor: MOOD_COLORS[score], boxShadow: `0 0 0 3px ${MOOD_COLORS[score]}40` }
                   : undefined
               }
             >
