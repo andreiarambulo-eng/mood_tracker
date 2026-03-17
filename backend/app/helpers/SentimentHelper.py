@@ -1,4 +1,18 @@
 """Sentiment analysis helper using TextBlob."""
+import os
+import nltk
+
+# Ensure NLTK data is available (for serverless environments like Vercel)
+_nltk_data_path = os.path.join('/tmp', 'nltk_data')
+if not os.path.exists(os.path.join(_nltk_data_path, 'tokenizers')):
+    os.makedirs(_nltk_data_path, exist_ok=True)
+    nltk.data.path.insert(0, _nltk_data_path)
+    try:
+        nltk.download('punkt_tab', download_dir=_nltk_data_path, quiet=True)
+        nltk.download('averaged_perceptron_tagger_eng', download_dir=_nltk_data_path, quiet=True)
+    except Exception:
+        pass
+
 from textblob import TextBlob
 
 
