@@ -24,7 +24,7 @@ const MOOD_LABELS: Record<number, string> = {
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
-  const { getToday, getMoods } = useMood();
+  const { getToday } = useMood();
 
   const [todayMood, setTodayMood] = useState<MoodEntry | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -48,8 +48,8 @@ export default function DashboardPage() {
         setWeeklyAvg(weeklyRes.value.data?.average_mood ?? null);
       }
       if (moodsRes.status === "fulfilled") {
-        // @ts-expect-error dynamic shape
-        setTotalEntries(moodsRes.value?.data?.pagination?.total_count ?? 0);
+        const moodsData = moodsRes.value as { data?: { pagination?: { total_count?: number } } };
+        setTotalEntries(moodsData?.data?.pagination?.total_count ?? 0);
       }
     } catch {
       // silently fail stats
@@ -58,7 +58,7 @@ export default function DashboardPage() {
 
   const fetchTodayMood = useCallback(async () => {
     const res = await getToday();
-    setTodayMood(res?.data ?? null);
+    setTodayMood(res ?? null);
   }, [getToday]);
 
   const fetchAll = useCallback(async () => {
