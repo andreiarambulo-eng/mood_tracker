@@ -95,12 +95,19 @@ export default function MoodCalendarHeatmap() {
     }
   }
 
-  const handleMouseEnter = (e: React.MouseEvent, day: Date) => {
+  const handleMouseMove = (e: React.MouseEvent, day: Date) => {
     const dateStr = toISODate(day);
     const entry = heatmapMap[dateStr];
+    // Keep tooltip within viewport
+    const tooltipW = 140;
+    const tooltipH = 70;
+    let x = e.clientX + 14;
+    let y = e.clientY + 14;
+    if (x + tooltipW > window.innerWidth) x = e.clientX - tooltipW - 8;
+    if (y + tooltipH > window.innerHeight) y = e.clientY - tooltipH - 8;
     setTooltip({
-      x: e.clientX + 12,
-      y: e.clientY - 10,
+      x,
+      y,
       date: dateStr,
       score: entry?.mood_score ?? 0,
       label: entry?.mood_label ?? "No entry",
@@ -181,7 +188,7 @@ export default function MoodCalendarHeatmap() {
                       return (
                         <div
                           key={row}
-                          onMouseEnter={(e) => handleMouseEnter(e, cell)}
+                          onMouseMove={(e) => handleMouseMove(e, cell)}
                           onMouseLeave={handleMouseLeave}
                           className={`w-3 h-3 rounded-sm cursor-pointer transition-opacity hover:opacity-80 ${SQUARE_COLOR[score]}`}
                           aria-label={`${dateStr}: ${entry?.mood_label ?? "No entry"}`}
