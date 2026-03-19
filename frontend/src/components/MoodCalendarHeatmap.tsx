@@ -98,10 +98,9 @@ export default function MoodCalendarHeatmap() {
   const handleMouseEnter = (e: React.MouseEvent, day: Date) => {
     const dateStr = toISODate(day);
     const entry = heatmapMap[dateStr];
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
     setTooltip({
-      x: rect.left + window.scrollX,
-      y: rect.top + window.scrollY - 60,
+      x: e.clientX + 12,
+      y: e.clientY - 10,
       date: dateStr,
       score: entry?.mood_score ?? 0,
       label: entry?.mood_label ?? "No entry",
