@@ -49,6 +49,7 @@ class UserService:
         token = JWTHelper.create_token({
             "user_id": user["id"],
             "email": user["email"],
+            "full_name": user["full_name"],
             "role": user["role"]
         })
 
@@ -72,20 +73,22 @@ class UserService:
         }
 
     def verify_token(self, token: str) -> dict:
-        """Verify JWT token and return user data."""
+        """Verify JWT token and return user data.
+
+        Stateless verification: trusts the signed JWT payload without a DB
+        lookup. This is required for Vercel serverless where each function
+        invocation may have a fresh ephemeral SQLite DB in /tmp.
+        """
         payload = JWTHelper.verify_token(token)
         if not payload:
             return None
 
-        user = self.db.fetchone("SELECT id, email, full_name, role, is_active FROM users WHERE id = ?", (payload["user_id"],))
-        if not user or not user["is_active"]:
-            return None
-
+        # Return user info directly from the JWT payload (stateless)
         return {
-            "user_id": user["id"],
-            "email": user["email"],
-            "full_name": user["full_name"],
-            "role": user["role"]
+            "user_id": payload.get("user_id"),
+            "email": payload.get("email"),
+            "full_name": payload.get("full_name", ""),
+            "role": payload.get("role", "User")
         }
 
     def get_all_users(self, page: int = 1, limit: int = 10) -> dict:
