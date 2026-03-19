@@ -33,7 +33,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <Sidebar user={user} />
-      <main className="ml-60 min-h-screen p-6">{children}</main>
+      {/* pt-14 on mobile for top bar, lg:pt-0 + lg:ml-60 for desktop sidebar */}
+      <main className="pt-14 lg:pt-0 lg:ml-60 min-h-screen p-4 sm:p-6">{children}</main>
     </div>
   );
 }

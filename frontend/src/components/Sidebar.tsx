@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/lib/auth";
@@ -13,6 +14,22 @@ interface NavItem {
 
 interface SidebarProps {
   user: User;
+}
+
+function MenuIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="18" x2="20" y2="18" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
 }
 
 function HomeIcon() {
@@ -74,6 +91,7 @@ function LogoutIcon() {
 
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems: NavItem[] = [
     { label: "Dashboard", href: "/dashboard", icon: <HomeIcon /> },
@@ -91,10 +109,10 @@ export function Sidebar({ user }: SidebarProps) {
     return pathname.startsWith(href);
   }
 
-  return (
-    <aside className="fixed left-0 top-0 h-full w-60 flex flex-col z-30 bg-[hsl(230,30%,6%)] border-r border-white/[0.06]">
+  const sidebarContent = (
+    <>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-white/[0.06]">
+      <div className="px-6 py-5 border-b border-white/[0.06] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 border border-violet-500/15">
             <span className="text-lg">🌌</span>
@@ -104,6 +122,14 @@ export function Sidebar({ user }: SidebarProps) {
             <p className="text-[11px] text-white/40">Daily well-being</p>
           </div>
         </div>
+        {/* Close button on mobile */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="lg:hidden p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.05] transition"
+          aria-label="Close menu"
+        >
+          <CloseIcon />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -114,6 +140,7 @@ export function Sidebar({ user }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 active
                   ? "bg-violet-500/15 text-violet-300 shadow-sm shadow-violet-500/10"
@@ -149,6 +176,46 @@ export function Sidebar({ user }: SidebarProps) {
           Sign out
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-[hsl(230,30%,6%)]/95 backdrop-blur-md border-b border-white/[0.06] flex items-center px-4 gap-3">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/[0.05] transition"
+          aria-label="Open menu"
+        >
+          <MenuIcon />
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-white">Mood Tracker</span>
+        </div>
+      </div>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile slide-out sidebar */}
+      <aside
+        className={`lg:hidden fixed left-0 top-0 h-full w-64 flex flex-col z-50 bg-[hsl(230,30%,6%)] border-r border-white/[0.06] transition-transform duration-300 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex fixed left-0 top-0 h-full w-60 flex-col z-30 bg-[hsl(230,30%,6%)] border-r border-white/[0.06]">
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

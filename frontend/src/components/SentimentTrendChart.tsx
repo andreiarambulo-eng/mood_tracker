@@ -78,7 +78,7 @@ export function SentimentTrendChart() {
   }));
 
   return (
-    <Card className="glass-card col-span-2 border-0">
+    <Card className="glass-card col-span-1 sm:col-span-2 border-0">
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>

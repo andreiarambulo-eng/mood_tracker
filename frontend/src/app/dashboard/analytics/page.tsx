@@ -164,12 +164,12 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Full-width sentiment trend chart */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <SentimentTrendChart />
       </div>
 
       {/* Word cloud + Mood distribution side by side on large screens */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <WordCloud />
         <MoodDistributionChart />
       </div>

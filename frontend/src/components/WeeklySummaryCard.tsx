@@ -81,7 +81,7 @@ export function WeeklySummaryCard({ summary }: WeeklySummaryCardProps) {
         ) : (
           <>
             {/* Stats row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div className="rounded-lg bg-muted/30 px-4 py-3 flex flex-col gap-1">
                 <span className="text-xs text-muted-foreground uppercase tracking-wide">
                   Avg Mood

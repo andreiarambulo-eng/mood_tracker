@@ -58,7 +58,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <div className="glass-card rounded-2xl p-8">
+        <div className="glass-card rounded-2xl p-6 sm:p-8">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-foreground">Create account</h2>
             <p className="text-sm text-muted-foreground mt-1">

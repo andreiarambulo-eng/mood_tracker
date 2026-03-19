@@ -45,7 +45,7 @@ export default function MoodEntryForm({ onSubmit, existingMood }: MoodEntryFormP
   };
 
   return (
-    <div className="glass-card rounded-2xl p-6 w-full">
+    <div className="glass-card rounded-2xl p-4 sm:p-6 w-full">
       <h2 className="text-lg font-semibold text-foreground mb-1">
         {existingMood ? "Update Today's Mood" : "How are you feeling today?"}
       </h2>
@@ -55,14 +55,14 @@ export default function MoodEntryForm({ onSubmit, existingMood }: MoodEntryFormP
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Emoji Picker */}
-        <div className="flex justify-between gap-3">
+        <div className="flex justify-between gap-2 sm:gap-3">
           {([1, 2, 3, 4, 5] as const).map((score) => (
             <button
               key={score}
               type="button"
               onClick={() => setSelectedScore(score)}
               className={`
-                flex flex-col items-center gap-2 flex-1 py-4 rounded-2xl transition-all duration-200
+                flex flex-col items-center gap-1.5 sm:gap-2 flex-1 py-3 sm:py-4 rounded-xl sm:rounded-2xl transition-all duration-200
                 ${selectedScore === score
                   ? "scale-105"
                   : "opacity-60 hover:opacity-90"}
@@ -79,8 +79,8 @@ export default function MoodEntryForm({ onSubmit, existingMood }: MoodEntryFormP
                   : "none",
               }}
             >
-              <span className="text-4xl drop-shadow-lg">{MOOD_EMOJIS[score]}</span>
-              <span className="text-[11px] text-white/60 font-medium">{MOOD_LABELS[score]}</span>
+              <span className="text-2xl sm:text-4xl drop-shadow-lg">{MOOD_EMOJIS[score]}</span>
+              <span className="text-[10px] sm:text-[11px] text-white/60 font-medium">{MOOD_LABELS[score]}</span>
             </button>
           ))}
         </div>

@@ -113,11 +113,11 @@ export default function DashboardPage() {
           Today&apos;s Mood
         </h2>
         {todayMood && !isEditing ? (
-          <div className="glass-card glass-card-hover rounded-2xl p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-5">
+          <div className="glass-card glass-card-hover rounded-2xl p-4 sm:p-6">
+            <div className="flex items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 sm:gap-5">
                 <div
-                  className="w-20 h-20 rounded-2xl flex items-center justify-center text-5xl shadow-lg"
+                  className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-3xl sm:text-5xl shadow-lg shrink-0"
                   style={{
                     background: `linear-gradient(135deg, ${MOOD_COLORS[todayMood.mood_score]}20, ${MOOD_COLORS[todayMood.mood_score]}08)`,
                     boxShadow: `0 0 30px ${MOOD_COLORS[todayMood.mood_score]}15`,

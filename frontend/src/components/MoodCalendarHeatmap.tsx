@@ -110,7 +110,7 @@ export default function MoodCalendarHeatmap() {
   const handleMouseLeave = () => setTooltip(null);
 
   return (
-    <div className="glass-card rounded-2xl p-6 w-full">
+    <div className="glass-card rounded-2xl p-4 sm:p-6 w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
