@@ -10,11 +10,11 @@ class UserService:
     """Handles user CRUD and authentication."""
 
     def __init__(self):
-        self.db = DatabaseManager()
+        self.users = DatabaseManager.get_collection("users")
 
     def register(self, email: str, full_name: str, password: str, role: str = "User") -> dict:
         """Register a new user."""
-        existing = self.db.fetchone("SELECT id FROM users WHERE email = ?", (email,))
+        existing = self.users.find_one({"email": email})
         if existing:
             return {"success": False, "message": "Email already registered"}
 
@@ -22,10 +22,17 @@ class UserService:
         now = datetime.utcnow().isoformat()
         user_id = str(uuid.uuid4())
 
-        self.db.execute_and_commit(
-            "INSERT INTO users (id, email, full_name, password_hash, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?)",
-            (user_id, email, full_name, password_hash, role, now, now)
-        )
+        self.users.insert_one({
+            "_id": user_id,
+            "email": email,
+            "full_name": full_name,
+            "password_hash": password_hash,
+            "role": role,
+            "is_active": True,
+            "created_at": now,
+            "updated_at": now,
+            "last_login": None
+        })
 
         return {
             "success": True,
@@ -35,7 +42,7 @@ class UserService:
 
     def login(self, email: str, password: str) -> dict:
         """Authenticate user and return JWT token."""
-        user = self.db.fetchone("SELECT * FROM users WHERE email = ?", (email,))
+        user = self.users.find_one({"email": email})
 
         if not user:
             return {"success": False, "message": "Invalid credentials"}
@@ -47,15 +54,15 @@ class UserService:
             return {"success": False, "message": "Invalid credentials"}
 
         token = JWTHelper.create_token({
-            "user_id": user["id"],
+            "user_id": user["_id"],
             "email": user["email"],
             "full_name": user["full_name"],
             "role": user["role"]
         })
 
-        self.db.execute_and_commit(
-            "UPDATE users SET last_login = ? WHERE id = ?",
-            (datetime.utcnow().isoformat(), user["id"])
+        self.users.update_one(
+            {"_id": user["_id"]},
+            {"$set": {"last_login": datetime.utcnow().isoformat()}}
         )
 
         return {
@@ -64,7 +71,7 @@ class UserService:
             "data": {
                 "token": token,
                 "user": {
-                    "user_id": user["id"],
+                    "user_id": user["_id"],
                     "email": user["email"],
                     "full_name": user["full_name"],
                     "role": user["role"]
@@ -76,14 +83,12 @@ class UserService:
         """Verify JWT token and return user data.
 
         Stateless verification: trusts the signed JWT payload without a DB
-        lookup. This is required for Vercel serverless where each function
-        invocation may have a fresh ephemeral SQLite DB in /tmp.
+        lookup for performance on serverless.
         """
         payload = JWTHelper.verify_token(token)
         if not payload:
             return None
 
-        # Return user info directly from the JWT payload (stateless)
         return {
             "user_id": payload.get("user_id"),
             "email": payload.get("email"),
@@ -94,43 +99,57 @@ class UserService:
     def get_all_users(self, page: int = 1, limit: int = 10) -> dict:
         """Get all users (admin only)."""
         skip = (page - 1) * limit
-        total = self.db.fetchone("SELECT COUNT(*) as cnt FROM users")["cnt"]
-        rows = self.db.fetchall(
-            "SELECT id, email, full_name, role, is_active, created_at, updated_at, last_login FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?",
-            (limit, skip)
-        )
+        total = self.users.count_documents({})
+        cursor = self.users.find(
+            {},
+            {"password_hash": 0}
+        ).sort("created_at", -1).skip(skip).limit(limit)
 
-        users = [{"_id": r["id"], **{k: r[k] for k in r.keys() if k != "id"}} for r in rows]
+        users = []
+        for u in cursor:
+            users.append({
+                "_id": u["_id"],
+                "user_id": u["_id"],
+                "email": u["email"],
+                "full_name": u["full_name"],
+                "role": u["role"],
+                "is_active": u["is_active"],
+                "created_at": u.get("created_at"),
+                "updated_at": u.get("updated_at"),
+                "last_login": u.get("last_login")
+            })
         return {"data": users, "total_count": total}
 
     def get_user_by_id(self, user_id: str) -> dict:
         """Get a single user."""
-        user = self.db.fetchone(
-            "SELECT id, email, full_name, role, is_active, created_at, updated_at, last_login FROM users WHERE id = ?",
-            (user_id,)
-        )
+        user = self.users.find_one({"_id": user_id}, {"password_hash": 0})
         if not user:
             return None
-        return {"_id": user["id"], **{k: user[k] for k in user.keys() if k != "id"}}
+        return {
+            "_id": user["_id"],
+            "email": user["email"],
+            "full_name": user["full_name"],
+            "role": user["role"],
+            "is_active": user["is_active"],
+            "created_at": user.get("created_at"),
+            "updated_at": user.get("updated_at"),
+            "last_login": user.get("last_login")
+        }
 
     def update_user(self, user_id: str, updates: dict) -> dict:
         """Update user fields."""
         updates["updated_at"] = datetime.utcnow().isoformat()
-        set_clauses = ", ".join(f"{k} = ?" for k in updates)
-        values = list(updates.values()) + [user_id]
-        cursor = self.db.execute_and_commit(
-            f"UPDATE users SET {set_clauses} WHERE id = ?", tuple(values)
-        )
-        return {"success": cursor.rowcount > 0}
+        result = self.users.update_one({"_id": user_id}, {"$set": updates})
+        return {"success": result.modified_count > 0}
 
     def delete_user(self, user_id: str) -> dict:
         """Delete a user."""
-        cursor = self.db.execute_and_commit("DELETE FROM users WHERE id = ?", (user_id,))
-        return {"success": cursor.rowcount > 0}
+        result = self.users.delete_one({"_id": user_id})
+        return {"success": result.deleted_count > 0}
 
     def change_password(self, user_id: str, current_password: str, new_password: str) -> dict:
         """Change user password."""
-        user = self.db.fetchone("SELECT password_hash FROM users WHERE id = ?", (user_id,))
+        user = self.users.find_one({"_id": user_id})
         if not user:
             return {"success": False, "message": "User not found"}
 
@@ -138,8 +157,8 @@ class UserService:
             return {"success": False, "message": "Current password is incorrect"}
 
         new_hash = PasswordHelper.hash_password(new_password)
-        self.db.execute_and_commit(
-            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
-            (new_hash, datetime.utcnow().isoformat(), user_id)
+        self.users.update_one(
+            {"_id": user_id},
+            {"$set": {"password_hash": new_hash, "updated_at": datetime.utcnow().isoformat()}}
         )
         return {"success": True, "message": "Password changed successfully"}

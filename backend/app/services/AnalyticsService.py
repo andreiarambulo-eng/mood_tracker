@@ -29,7 +29,8 @@ class AnalyticsService:
     }
 
     def __init__(self):
-        self.db = DatabaseManager()
+        self.moods = DatabaseManager.get_collection("moods")
+        self.users = DatabaseManager.get_collection("users")
 
     def get_heatmap(self, user_id: str, year: int = None) -> list:
         """Get 12-month heatmap data."""
@@ -39,40 +40,40 @@ class AnalyticsService:
         start = f"{year}-01-01"
         end = f"{year}-12-31"
 
-        rows = self.db.fetchall(
-            "SELECT logged_date, mood_score, mood_label FROM moods WHERE user_id = ? AND logged_date >= ? AND logged_date <= ? ORDER BY logged_date",
-            (user_id, start, end)
-        )
+        cursor = self.moods.find(
+            {"user_id": user_id, "logged_date": {"$gte": start, "$lte": end}},
+            {"logged_date": 1, "mood_score": 1, "mood_label": 1}
+        ).sort("logged_date", 1)
 
-        return [{"date": r["logged_date"], "mood_score": r["mood_score"], "mood_label": r["mood_label"]} for r in rows]
+        return [{"date": d["logged_date"], "mood_score": d["mood_score"], "mood_label": d["mood_label"]} for d in cursor]
 
     def get_sentiment_trend(self, user_id: str, days: int = 30) -> list:
         """Get sentiment scores over time."""
         start = (date.today() - timedelta(days=days)).isoformat()
 
-        rows = self.db.fetchall(
-            "SELECT logged_date, sentiment_score, sentiment_label, mood_score FROM moods WHERE user_id = ? AND logged_date >= ? ORDER BY logged_date",
-            (user_id, start)
-        )
+        cursor = self.moods.find(
+            {"user_id": user_id, "logged_date": {"$gte": start}},
+            {"logged_date": 1, "sentiment_score": 1, "sentiment_label": 1, "mood_score": 1}
+        ).sort("logged_date", 1)
 
         return [
-            {"date": r["logged_date"], "sentiment_score": r["sentiment_score"],
-             "sentiment_label": r["sentiment_label"], "mood_score": r["mood_score"]}
-            for r in rows
+            {"date": d["logged_date"], "sentiment_score": d["sentiment_score"],
+             "sentiment_label": d["sentiment_label"], "mood_score": d["mood_score"]}
+            for d in cursor
         ]
 
     def get_word_cloud(self, user_id: str, days: int = 90) -> list:
         """Get word frequencies from remarks for word cloud."""
         start = (date.today() - timedelta(days=days)).isoformat()
 
-        rows = self.db.fetchall(
-            "SELECT remark FROM moods WHERE user_id = ? AND logged_date >= ? AND remark IS NOT NULL",
-            (user_id, start)
+        cursor = self.moods.find(
+            {"user_id": user_id, "logged_date": {"$gte": start}, "remark": {"$ne": None}},
+            {"remark": 1}
         )
 
         word_counter = Counter()
-        for row in rows:
-            decrypted = EncryptionHelper.decrypt_field(row["remark"])
+        for doc in cursor:
+            decrypted = EncryptionHelper.decrypt_field(doc["remark"])
             if decrypted:
                 words = re.findall(r'[a-zA-Z]{3,}', decrypted.lower())
                 filtered = [w for w in words if w not in self.STOP_WORDS]
@@ -91,10 +92,11 @@ class AnalyticsService:
         week_start = start_of_week1 + timedelta(weeks=week - 1)
         week_end = week_start + timedelta(days=6)
 
-        rows = self.db.fetchall(
-            "SELECT * FROM moods WHERE user_id = ? AND logged_date >= ? AND logged_date <= ? ORDER BY logged_date",
-            (user_id, week_start.isoformat(), week_end.isoformat())
-        )
+        cursor = self.moods.find(
+            {"user_id": user_id, "logged_date": {"$gte": week_start.isoformat(), "$lte": week_end.isoformat()}}
+        ).sort("logged_date", 1)
+
+        rows = list(cursor)
 
         if not rows:
             return {
@@ -105,17 +107,17 @@ class AnalyticsService:
             }
 
         mood_scores = [r["mood_score"] for r in rows]
-        sentiment_scores = [r["sentiment_score"] or 0 for r in rows]
+        sentiment_scores = [r.get("sentiment_score") or 0 for r in rows]
         mood_counter = Counter([r["mood_label"] for r in rows])
 
         days = []
         for r in rows:
-            remark = EncryptionHelper.decrypt_field(r["remark"]) if r["remark"] else None
+            remark = EncryptionHelper.decrypt_field(r["remark"]) if r.get("remark") else None
             days.append({
                 "date": r["logged_date"],
                 "mood_score": r["mood_score"],
                 "mood_label": r["mood_label"],
-                "sentiment_score": r["sentiment_score"] or 0,
+                "sentiment_score": r.get("sentiment_score") or 0,
                 "remark_preview": (remark[:80] + "...") if remark and len(remark) > 80 else remark
             })
 
@@ -133,12 +135,14 @@ class AnalyticsService:
         """Get mood score distribution."""
         start = (date.today() - timedelta(days=days)).isoformat()
 
-        rows = self.db.fetchall(
-            "SELECT mood_score, mood_label, COUNT(*) as count FROM moods WHERE user_id = ? AND logged_date >= ? GROUP BY mood_score, mood_label ORDER BY mood_score",
-            (user_id, start)
-        )
+        pipeline = [
+            {"$match": {"user_id": user_id, "logged_date": {"$gte": start}}},
+            {"$group": {"_id": {"mood_score": "$mood_score", "mood_label": "$mood_label"}, "count": {"$sum": 1}}},
+            {"$sort": {"_id.mood_score": 1}}
+        ]
 
-        return [{"mood_score": r["mood_score"], "mood_label": r["mood_label"], "count": r["count"]} for r in rows]
+        results = list(self.moods.aggregate(pipeline))
+        return [{"mood_score": r["_id"]["mood_score"], "mood_label": r["_id"]["mood_label"], "count": r["count"]} for r in results]
 
     def get_streak(self, user_id: str) -> dict:
         """Calculate current consecutive logging streak."""
@@ -147,11 +151,8 @@ class AnalyticsService:
         check_date = today
 
         while True:
-            row = self.db.fetchone(
-                "SELECT id FROM moods WHERE user_id = ? AND logged_date = ?",
-                (user_id, check_date.isoformat())
-            )
-            if row:
+            doc = self.moods.find_one({"user_id": user_id, "logged_date": check_date.isoformat()})
+            if doc:
                 streak += 1
                 check_date -= timedelta(days=1)
             else:
@@ -161,22 +162,31 @@ class AnalyticsService:
 
     def get_admin_overview(self) -> dict:
         """Platform-wide mood averages (admin only, no PII)."""
-        total_users = self.db.fetchone("SELECT COUNT(*) as cnt FROM users WHERE is_active = 1")["cnt"]
-        total_entries = self.db.fetchone("SELECT COUNT(*) as cnt FROM moods")["cnt"]
+        total_users = self.users.count_documents({"is_active": True})
+        total_entries = self.moods.count_documents({})
 
         today = date.today()
         week_start = (today - timedelta(days=today.weekday())).isoformat()
 
-        row = self.db.fetchone(
-            "SELECT AVG(mood_score) as avg_mood, COUNT(*) as count FROM moods WHERE logged_date >= ?",
-            (week_start,)
-        )
+        pipeline = [
+            {"$match": {"logged_date": {"$gte": week_start}}},
+            {"$group": {"_id": None, "avg_mood": {"$avg": "$mood_score"}, "count": {"$sum": 1}}}
+        ]
+        result = list(self.moods.aggregate(pipeline))
+
+        if result:
+            return {
+                "total_users": total_users,
+                "total_entries": total_entries,
+                "this_week_avg_mood": round(result[0]["avg_mood"], 2) if result[0]["avg_mood"] else None,
+                "this_week_entries": result[0]["count"]
+            }
 
         return {
             "total_users": total_users,
             "total_entries": total_entries,
-            "this_week_avg_mood": round(row["avg_mood"], 2) if row["avg_mood"] else None,
-            "this_week_entries": row["count"]
+            "this_week_avg_mood": None,
+            "this_week_entries": 0
         }
 
     def get_active_users_stats(self) -> list:
@@ -184,17 +194,26 @@ class AnalyticsService:
         today = date.today()
         week_start = (today - timedelta(days=today.weekday())).isoformat()
 
-        rows = self.db.fetchall(
-            """SELECT m.user_id, u.full_name, COUNT(*) as entries_this_week, AVG(m.mood_score) as avg_mood
-               FROM moods m JOIN users u ON m.user_id = u.id
-               WHERE m.logged_date >= ?
-               GROUP BY m.user_id, u.full_name
-               ORDER BY entries_this_week DESC""",
-            (week_start,)
-        )
+        pipeline = [
+            {"$match": {"logged_date": {"$gte": week_start}}},
+            {"$group": {
+                "_id": "$user_id",
+                "entries_this_week": {"$sum": 1},
+                "avg_mood": {"$avg": "$mood_score"}
+            }},
+            {"$sort": {"entries_this_week": -1}}
+        ]
+        mood_results = list(self.moods.aggregate(pipeline))
+
+        # Lookup user names
+        user_ids = [r["_id"] for r in mood_results]
+        users_map = {}
+        if user_ids:
+            for u in self.users.find({"_id": {"$in": user_ids}}, {"full_name": 1}):
+                users_map[u["_id"]] = u["full_name"]
 
         return [
-            {"user_id": r["user_id"], "full_name": r["full_name"],
+            {"user_id": r["_id"], "full_name": users_map.get(r["_id"], "Unknown"),
              "entries_this_week": r["entries_this_week"], "avg_mood": round(r["avg_mood"], 2)}
-            for r in rows
+            for r in mood_results
         ]
