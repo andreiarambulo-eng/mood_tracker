@@ -25,14 +25,6 @@ export default function MoodEntryForm({ onSubmit, existingMood }: MoodEntryFormP
     5: "Excellent",
   };
 
-  const TAILWIND_BG: Record<number, string> = {
-    1: "bg-red-500",
-    2: "bg-orange-500",
-    3: "bg-yellow-500",
-    4: "bg-lime-500",
-    5: "bg-green-500",
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedScore === 0) return;
@@ -53,52 +45,57 @@ export default function MoodEntryForm({ onSubmit, existingMood }: MoodEntryFormP
   };
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full">
-      <h2 className="text-lg font-semibold text-white mb-1">
+    <div className="glass-card rounded-2xl p-6 w-full">
+      <h2 className="text-lg font-semibold text-foreground mb-1">
         {existingMood ? "Update Today's Mood" : "How are you feeling today?"}
       </h2>
-      <p className="text-sm text-gray-400 mb-5">
+      <p className="text-sm text-muted-foreground mb-6">
         Select the emoji that best represents your current mood.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Emoji Picker */}
-        <div className="flex justify-between gap-2">
+        <div className="flex justify-between gap-3">
           {([1, 2, 3, 4, 5] as const).map((score) => (
             <button
               key={score}
               type="button"
               onClick={() => setSelectedScore(score)}
               className={`
-                flex flex-col items-center gap-1 flex-1 py-3 rounded-xl transition-all duration-150
-                ${TAILWIND_BG[score]} bg-opacity-20 hover:bg-opacity-30
+                flex flex-col items-center gap-2 flex-1 py-4 rounded-2xl transition-all duration-200
                 ${selectedScore === score
-                  ? `ring-2 ring-offset-2 ring-offset-gray-900 scale-105`
-                  : "opacity-70 hover:opacity-90"}
+                  ? "scale-105"
+                  : "opacity-60 hover:opacity-90"}
               `}
-              style={
-                selectedScore === score
-                  ? { borderColor: MOOD_COLORS[score], boxShadow: `0 0 0 3px ${MOOD_COLORS[score]}40` }
-                  : undefined
-              }
+              style={{
+                background: selectedScore === score
+                  ? `linear-gradient(135deg, ${MOOD_COLORS[score]}25, ${MOOD_COLORS[score]}08)`
+                  : "rgba(255,255,255,0.03)",
+                border: selectedScore === score
+                  ? `2px solid ${MOOD_COLORS[score]}40`
+                  : "2px solid transparent",
+                boxShadow: selectedScore === score
+                  ? `0 0 24px ${MOOD_COLORS[score]}15, 0 4px 12px rgba(0,0,0,0.2)`
+                  : "none",
+              }}
             >
-              <span className="text-3xl">{MOOD_EMOJIS[score]}</span>
-              <span className="text-xs text-gray-300 font-medium">{MOOD_LABELS[score]}</span>
+              <span className="text-4xl drop-shadow-lg">{MOOD_EMOJIS[score]}</span>
+              <span className="text-[11px] text-white/60 font-medium">{MOOD_LABELS[score]}</span>
             </button>
           ))}
         </div>
 
         {/* Selected mood label */}
         {selectedScore > 0 && (
-          <p className="text-center text-sm font-medium" style={{ color: MOOD_COLORS[selectedScore] }}>
+          <p className="text-center text-sm font-semibold" style={{ color: MOOD_COLORS[selectedScore] }}>
             {MOOD_EMOJIS[selectedScore]} {MOOD_LABELS[selectedScore]}
           </p>
         )}
 
         {/* Remark Textarea */}
-        <div className="space-y-1">
-          <label className="text-sm text-gray-300 font-medium" htmlFor="remark">
-            Add a note <span className="text-gray-500">(optional)</span>
+        <div className="space-y-2">
+          <label className="text-sm text-muted-foreground font-medium" htmlFor="remark">
+            Add a note <span className="text-muted-foreground/50">(optional)</span>
           </label>
           <textarea
             id="remark"
@@ -108,10 +105,10 @@ export default function MoodEntryForm({ onSubmit, existingMood }: MoodEntryFormP
             }}
             placeholder="What's on your mind? Any context for your mood today..."
             rows={3}
-            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-foreground placeholder-white/20 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/30 transition"
           />
           <div className="flex justify-end">
-            <span className={`text-xs ${remark.length >= 480 ? "text-red-400" : "text-gray-500"}`}>
+            <span className={`text-xs ${remark.length >= 480 ? "text-red-400" : "text-muted-foreground/50"}`}>
               {remark.length}/500
             </span>
           </div>
@@ -119,7 +116,7 @@ export default function MoodEntryForm({ onSubmit, existingMood }: MoodEntryFormP
 
         {/* Error */}
         {error && (
-          <p className="text-sm text-red-400 bg-red-900/20 border border-red-800 rounded-lg px-3 py-2">
+          <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
             {error}
           </p>
         )}
@@ -128,9 +125,14 @@ export default function MoodEntryForm({ onSubmit, existingMood }: MoodEntryFormP
         <button
           type="submit"
           disabled={selectedScore === 0 || loading}
-          className="w-full py-3 rounded-xl font-semibold text-sm text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          className="w-full py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-500/15"
         >
-          {loading ? "Saving..." : existingMood ? "Update Mood" : "Log Mood"}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              Saving...
+            </span>
+          ) : existingMood ? "Update Mood" : "Log Mood"}
         </button>
       </form>
     </div>

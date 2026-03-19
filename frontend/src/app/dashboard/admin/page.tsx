@@ -80,7 +80,7 @@ function ChevronRightIcon() {
 function OverviewCards({ overview }: { overview: AdminOverview }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card className="bg-card border-border">
+      <Card className="glass-card border-0">
         <CardHeader className="pb-2">
           <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Total Users
@@ -93,7 +93,7 @@ function OverviewCards({ overview }: { overview: AdminOverview }) {
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="glass-card border-0">
         <CardHeader className="pb-2">
           <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Total Entries
@@ -106,7 +106,7 @@ function OverviewCards({ overview }: { overview: AdminOverview }) {
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="glass-card border-0">
         <CardHeader className="pb-2">
           <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             This Week Avg Mood
@@ -121,7 +121,7 @@ function OverviewCards({ overview }: { overview: AdminOverview }) {
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="glass-card border-0">
         <CardHeader className="pb-2">
           <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             This Week Entries
@@ -190,7 +190,7 @@ function UserTable() {
   }
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="glass-card border-0">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-foreground">User Management</CardTitle>

@@ -24,11 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <div className="galaxy-bg" aria-hidden="true" />
+        <div className="relative z-10">{children}</div>
       </body>
     </html>
   );

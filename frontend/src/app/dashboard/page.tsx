@@ -83,21 +83,21 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-400">Loading dashboard...</p>
+          <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">
-          Good{getGreeting()}, {user?.full_name?.split(" ")[0] ?? "there"} 👋
+        <h1 className="text-2xl font-bold text-foreground">
+          Good {getGreeting()}, {user?.full_name?.split(" ")[0] ?? "there"}
         </h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {new Date().toLocaleDateString("en-US", {
             weekday: "long",
             year: "numeric",
@@ -109,16 +109,19 @@ export default function DashboardPage() {
 
       {/* Today's Mood Card */}
       <section>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Today&apos;s Mood
         </h2>
         {todayMood && !isEditing ? (
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+          <div className="glass-card glass-card-hover rounded-2xl p-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-5">
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl"
-                  style={{ backgroundColor: MOOD_COLORS[todayMood.mood_score] + "33" }}
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center text-5xl shadow-lg"
+                  style={{
+                    background: `linear-gradient(135deg, ${MOOD_COLORS[todayMood.mood_score]}20, ${MOOD_COLORS[todayMood.mood_score]}08)`,
+                    boxShadow: `0 0 30px ${MOOD_COLORS[todayMood.mood_score]}15`,
+                  }}
                 >
                   {MOOD_EMOJIS[todayMood.mood_score]}
                 </div>
@@ -129,11 +132,11 @@ export default function DashboardPage() {
                   >
                     {MOOD_LABELS[todayMood.mood_score]}
                   </p>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     Score: {todayMood.mood_score}/5
                   </p>
                   {todayMood.sentiment_label && (
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-muted-foreground/70 mt-0.5">
                       Sentiment: {todayMood.sentiment_label}
                     </p>
                   )}
@@ -141,14 +144,14 @@ export default function DashboardPage() {
               </div>
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 text-sm font-medium text-indigo-400 border border-indigo-800 rounded-xl hover:bg-indigo-900/30 transition"
+                className="px-4 py-2 text-sm font-medium text-violet-400 border border-violet-500/20 rounded-xl hover:bg-violet-500/10 transition-all"
               >
                 Edit
               </button>
             </div>
             {todayMood.remark && (
-              <div className="mt-4 pt-4 border-t border-gray-800">
-                <p className="text-sm text-gray-300 italic">&ldquo;{todayMood.remark}&rdquo;</p>
+              <div className="mt-5 pt-5 border-t border-white/[0.06]">
+                <p className="text-sm text-white/70 italic leading-relaxed">&ldquo;{todayMood.remark}&rdquo;</p>
               </div>
             )}
           </div>
@@ -161,7 +164,7 @@ export default function DashboardPage() {
         {isEditing && (
           <button
             onClick={() => setIsEditing(false)}
-            className="mt-2 text-sm text-gray-500 hover:text-gray-300 transition"
+            className="mt-2 text-sm text-muted-foreground hover:text-foreground transition"
           >
             Cancel
           </button>
@@ -170,29 +173,29 @@ export default function DashboardPage() {
 
       {/* Quick Stats */}
       <section>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Quick Stats
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Current Streak */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-orange-400 text-xl">🔥</span>
-              <span className="text-sm text-gray-400 font-medium">Current Streak</span>
+          <div className="glass-card glass-card-hover rounded-2xl p-5">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-2xl">
+                🔥
+              </div>
+              <span className="text-sm text-muted-foreground font-medium">Current Streak</span>
             </div>
-            <p className="text-3xl font-bold text-white">
+            <p className="text-3xl font-bold text-foreground">
               {streak?.current_streak ?? 0}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              days in a row
-            </p>
+            <p className="text-xs text-muted-foreground/70 mt-1">days in a row</p>
           </div>
 
-          {/* This Week's Average */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-indigo-400 text-xl">📊</span>
-              <span className="text-sm text-gray-400 font-medium">This Week Avg</span>
+          <div className="glass-card glass-card-hover rounded-2xl p-5">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-2xl">
+                📊
+              </div>
+              <span className="text-sm text-muted-foreground font-medium">This Week Avg</span>
             </div>
             <p
               className="text-3xl font-bold"
@@ -200,29 +203,30 @@ export default function DashboardPage() {
                 color:
                   weeklyAvg != null && weeklyAvg > 0
                     ? MOOD_COLORS[Math.round(weeklyAvg) as 1 | 2 | 3 | 4 | 5]
-                    : "#9ca3af",
+                    : "hsl(var(--muted-foreground))",
               }}
             >
               {weeklyAvg != null ? weeklyAvg.toFixed(1) : "—"}
             </p>
-            <p className="text-xs text-gray-500 mt-1">mood score / 5</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">mood score / 5</p>
           </div>
 
-          {/* Total Entries */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-green-400 text-xl">📝</span>
-              <span className="text-sm text-gray-400 font-medium">Total Entries</span>
+          <div className="glass-card glass-card-hover rounded-2xl p-5">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-2xl">
+                📝
+              </div>
+              <span className="text-sm text-muted-foreground font-medium">Total Entries</span>
             </div>
-            <p className="text-3xl font-bold text-white">{totalEntries}</p>
-            <p className="text-xs text-gray-500 mt-1">moods logged</p>
+            <p className="text-3xl font-bold text-foreground">{totalEntries}</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">moods logged</p>
           </div>
         </div>
       </section>
 
       {/* Calendar Heatmap */}
       <section>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Mood Calendar
         </h2>
         <MoodCalendarHeatmap />

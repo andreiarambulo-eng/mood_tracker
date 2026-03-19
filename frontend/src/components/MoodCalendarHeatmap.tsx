@@ -16,9 +16,8 @@ const MOOD_LABELS: Record<number, string> = {
   5: "Excellent",
 };
 
-// Tailwind classes for each score (static so Tailwind includes them)
 const SQUARE_COLOR: Record<number, string> = {
-  0: "bg-gray-800",
+  0: "bg-white/[0.04]",
   1: "bg-red-500",
   2: "bg-orange-500",
   3: "bg-yellow-500",
@@ -74,21 +73,15 @@ export default function MoodCalendarHeatmap() {
     fetchHeatmap(year);
   }, [year, fetchHeatmap]);
 
-  // Build weeks: columns of 7 days (Mon-Sun), first col may have empty cells
   const allDays = getDaysInYear(year);
-
-  // Jan 1 day-of-week (0=Sun,1=Mon,...6=Sat). Shift so Mon=0
   const firstDow = (new Date(year, 0, 1).getDay() + 6) % 7;
 
-  // Build a flat array of cells: null = empty pad, Date = real day
   type Cell = Date | null;
   const cells: Cell[] = Array(firstDow).fill(null).concat(allDays);
-  // pad end to complete last week
   while (cells.length % 7 !== 0) cells.push(null);
 
   const numWeeks = cells.length / 7;
 
-  // For month labels: find which column each month starts in
   const monthColStart: Record<number, number> = {};
   for (let col = 0; col < numWeeks; col++) {
     for (let row = 0; row < 7; row++) {
@@ -118,26 +111,26 @@ export default function MoodCalendarHeatmap() {
   const handleMouseLeave = () => setTooltip(null);
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full">
+    <div className="glass-card rounded-2xl p-6 w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-white">Mood History</h2>
-          <p className="text-sm text-gray-400">Your mood over {year}</p>
+          <h2 className="text-lg font-semibold text-foreground">Mood History</h2>
+          <p className="text-sm text-muted-foreground">Your mood over {year}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setYear((y) => y - 1)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition"
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.05] transition"
             aria-label="Previous year"
           >
             &#8249;
           </button>
-          <span className="text-white font-semibold text-sm w-12 text-center">{year}</span>
+          <span className="text-foreground font-semibold text-sm w-12 text-center">{year}</span>
           <button
             onClick={() => setYear((y) => y + 1)}
             disabled={year >= new Date().getFullYear()}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.05] disabled:opacity-30 disabled:cursor-not-allowed transition"
             aria-label="Next year"
           >
             &#8250;
@@ -146,7 +139,7 @@ export default function MoodCalendarHeatmap() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-32 text-gray-500 text-sm">
+        <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
           Loading heatmap...
         </div>
       ) : (
@@ -155,7 +148,7 @@ export default function MoodCalendarHeatmap() {
             {/* Day-of-week labels */}
             <div className="flex flex-col gap-0.5 mr-1 pt-5">
               {DOW_LABELS.map((label, i) => (
-                <div key={i} className="h-3 w-7 text-right text-xs text-gray-500 leading-3">
+                <div key={i} className="h-3 w-7 text-right text-[10px] text-muted-foreground/60 leading-3">
                   {label}
                 </div>
               ))}
@@ -166,7 +159,7 @@ export default function MoodCalendarHeatmap() {
               {/* Month labels row */}
               <div className="flex gap-0.5 mb-1">
                 {Array.from({ length: numWeeks }, (_, col) => (
-                  <div key={col} className="w-3 text-xs text-gray-500 truncate">
+                  <div key={col} className="w-3 text-[10px] text-muted-foreground/60 truncate">
                     {MONTH_LABELS[
                       Object.entries(monthColStart).find(([, v]) => v === col)?.[0] as unknown as number
                     ] ?? ""}
@@ -206,7 +199,7 @@ export default function MoodCalendarHeatmap() {
 
       {/* Legend */}
       <div className="flex items-center gap-2 mt-4">
-        <span className="text-xs text-gray-500">Less</span>
+        <span className="text-[10px] text-muted-foreground/50">Less</span>
         {([0, 1, 2, 3, 4, 5] as const).map((score) => (
           <div
             key={score}
@@ -214,25 +207,25 @@ export default function MoodCalendarHeatmap() {
             title={score === 0 ? "No entry" : MOOD_LABELS[score]}
           />
         ))}
-        <span className="text-xs text-gray-500">More</span>
+        <span className="text-[10px] text-muted-foreground/50">More</span>
       </div>
 
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="fixed z-50 pointer-events-none bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs shadow-xl"
+          className="fixed z-50 pointer-events-none glass-card rounded-lg px-3 py-2 text-xs"
           style={{ left: tooltip.x, top: tooltip.y }}
         >
-          <p className="text-gray-300 font-medium">{tooltip.date}</p>
+          <p className="text-white/70 font-medium">{tooltip.date}</p>
           {tooltip.score > 0 ? (
             <>
               <p style={{ color: MOOD_COLORS[tooltip.score] }} className="font-semibold">
                 {tooltip.label}
               </p>
-              <p className="text-gray-400">Score: {tooltip.score}/5</p>
+              <p className="text-muted-foreground">Score: {tooltip.score}/5</p>
             </>
           ) : (
-            <p className="text-gray-500">No mood logged</p>
+            <p className="text-muted-foreground/60">No mood logged</p>
           )}
         </div>
       )}

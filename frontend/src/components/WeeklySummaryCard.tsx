@@ -61,7 +61,7 @@ export function WeeklySummaryCard({ summary }: WeeklySummaryCardProps) {
     avgMoodScore !== null ? (MOOD_EMOJIS[avgMoodScore] ?? "—") : "—";
 
   return (
-    <Card className="bg-card border-border w-full">
+    <Card className="glass-card border-0 w-full">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-foreground text-lg">

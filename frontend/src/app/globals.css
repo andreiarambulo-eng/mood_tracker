@@ -23,29 +23,36 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --background: 230 25% 5%;
+    --foreground: 220 20% 95%;
+    --card: 230 25% 8%;
+    --card-foreground: 220 20% 95%;
+    --popover: 230 25% 8%;
+    --popover-foreground: 220 20% 95%;
+    --primary: 250 80% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 230 20% 14%;
+    --secondary-foreground: 220 20% 95%;
+    --muted: 230 20% 14%;
+    --muted-foreground: 230 15% 55%;
+    --accent: 250 40% 20%;
+    --accent-foreground: 220 20% 95%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 230 20% 15%;
+    --input: 230 20% 14%;
+    --ring: 250 80% 65%;
+
+    --sidebar: 230 30% 6%;
+    --sidebar-foreground: 220 20% 90%;
+    --sidebar-border: 230 20% 12%;
+    --sidebar-accent: 250 30% 15%;
+    --sidebar-accent-foreground: 220 20% 95%;
+    --sidebar-primary: 250 80% 65%;
   }
 }
 
@@ -56,4 +63,97 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Galaxy animated background */
+.galaxy-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 20% 50%, rgba(88, 28, 135, 0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+              hsl(var(--background));
+}
+
+.galaxy-bg::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(2px 2px at 40% 70%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 60% 20%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 80% 50%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1.5px 1.5px at 10% 80%, rgba(139, 92, 246, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 70% 10%, rgba(59, 130, 246, 0.5), transparent),
+    radial-gradient(1px 1px at 50% 50%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 30% 60%, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(1.5px 1.5px at 90% 40%, rgba(168, 85, 247, 0.5), transparent),
+    radial-gradient(1px 1px at 15% 45%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 65% 85%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(2px 2px at 45% 15%, rgba(96, 165, 250, 0.4), transparent),
+    radial-gradient(1px 1px at 85% 75%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 25% 95%, rgba(167, 139, 250, 0.4), transparent);
+  background-size: 200% 200%;
+  animation: galaxy-drift 120s linear infinite;
+}
+
+.galaxy-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(600px circle at 30% 40%, rgba(139, 92, 246, 0.06), transparent 60%),
+    radial-gradient(800px circle at 70% 60%, rgba(59, 130, 246, 0.04), transparent 60%);
+  animation: nebula-pulse 20s ease-in-out infinite alternate;
+}
+
+@keyframes galaxy-drift {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-5%, -3%); }
+  50% { transform: translate(-2%, -5%); }
+  75% { transform: translate(-4%, -1%); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes nebula-pulse {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+/* Glass-morphism card style */
+.glass-card {
+  background: rgba(15, 15, 30, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.05),
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.glass-card-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-card-hover:hover {
+  border-color: rgba(139, 92, 246, 0.25);
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.1),
+    0 8px 32px rgba(139, 92, 246, 0.12),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Glow effects */
+.glow-purple {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.15), 0 0 40px rgba(139, 92, 246, 0.05);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 0 40px rgba(59, 130, 246, 0.05);
 }

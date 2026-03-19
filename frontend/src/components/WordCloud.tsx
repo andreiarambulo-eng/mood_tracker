@@ -60,7 +60,7 @@ export function WordCloud() {
   const maxCount = words.reduce((m, w) => Math.max(m, w.count), 0);
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="glass-card border-0">
       <CardHeader>
         <CardTitle className="text-foreground">Word Cloud</CardTitle>
         <p className="text-sm text-muted-foreground">

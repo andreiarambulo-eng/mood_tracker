@@ -103,7 +103,7 @@ function MoodDistributionChart() {
   }));
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="glass-card border-0">
       <CardHeader>
         <CardTitle className="text-foreground">Mood Distribution</CardTitle>
         <p className="text-sm text-muted-foreground">

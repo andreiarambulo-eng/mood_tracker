@@ -26,6 +26,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const data = await res.json();
 
   if (!res.ok) {
+    // Auto-logout on 401 (expired/invalid token) for authenticated endpoints
+    if (res.status === 401 && !isPublicEndpoint) {
+      Cookies.remove("auth_token");
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+      throw new Error("Session expired. Please sign in again.");
+    }
+
     // Handle FastAPI validation errors (array format) and standard errors
     let errorMessage = "Request failed";
     if (data.message) {
